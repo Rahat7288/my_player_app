@@ -1,69 +1,47 @@
-// ios/Runner/AppDelegate.swift
-import UIKit
 import Flutter
+import UIKit
 import AVFoundation
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
-    private var avPlayer: AVPlayer?
-    private let channel = MethodChannel(name: METHOD_CHANNEL, binaryMessenger: flutterEngine?.binaryMessenger)
-    
-    override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        GeneratedPluginRegistrant.ensureInitialized()
-        
-        let controller = window?.rootViewController as? FlutterViewController
-        
-        channel.setMethodCallHandler({ [weak self] call, result in
-            switch call.method {
-                case PLAY_EVENT:
-                    self?.playMedia(url: call.arguments as? String)
+    var player: AVPlayer?
+
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
+        let channel = FlutterMethodChannel(name: "com.example.app/media", binaryMessenger: controller.binaryMessenger)
+
+        channel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
+            if call.method == "playMedia" {
+                if let args = call.arguments as? [String: Any],
+                   let url = args["url"] as? String {
+                    self.playMedia(url: url)
                     result(nil)
-                case PAUSE_EVENT:
-                    self?.pauseMedia()
-                    result(nil)
-                case STOP_EVENT:
-                    self?.stopMedia()
-                    result(nil)
-                case "getPosition":
-                    self?.getPosition(result)
-                case "seek":
-                    self?.seekTo(position: call.arguments as? Double)
-                default:
-                    result(FlutterMethodNotImplemented)
+                } else {
+                    result(FlutterError(code: "INVALID_ARGUMENT", message: "URL is required", details: nil))
+                }
+            } else {
+                result(FlutterMethodNotImplemented)
             }
-        })
-        
+        }
+
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
-    private func playMedia(url: String?) {
-        guard let url = url, let playerUrl = URL(string: url) else { return }
-        avPlayer = AVPlayer(url: playerUrl)
-        NotificationCenter.default.addObserver(self,
-                                           selector: #selector(playerItemDidReachEnd),
-                                           name: .AVPlayerItemDidPlayToEndTime,
-                                           object: nil)
-        avPlayer?.play()
-    }
-
-    @objc private func playerItemDidReachEnd() {
-        channel.invokeMethod(COMPLETED_EVENT, arguments: nil)
+    private func playMedia(url: String) {
+        guard let url = URL(string: url) else { return }
+        player = AVPlayer(url: url)
+        player?.play()
     }
 
     private func pauseMedia() {
-        avPlayer?.pause()
+        player?.pause()
     }
 
-    private func stopMedia() {
-        avPlayer = nil
-    }
-
-    private func getPosition(_ result: FlutterResult) {
-        result(avPlayer?.currentTime().seconds ?? 0.0)
-    }
-
-    private func seekTo(position: Double?) {
-        guard let position = position else { return }
-        avPlayer?.seek(to: CMTime(seconds: position, preferredTimescale: CMTimeScale(1)))
+    private func seekMedia(position: Float) {
+        let newPosition = CMTime(seconds: Double(position), preferredTimescale: 1)
+        player?.seek(to: newPosition)
     }
 }
