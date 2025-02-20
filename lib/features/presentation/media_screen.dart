@@ -16,7 +16,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    playMedia();
+    // playMedia();
   }
 
   Future<void> playMedia() async {
