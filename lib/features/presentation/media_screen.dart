@@ -1,61 +1,54 @@
-// ui/media_player_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../core/utils/Communication_channel.dart';
+class PlayerScreen extends StatefulWidget {
+  final String url;
 
-class MediaControlScreen extends StatefulWidget {
+  const PlayerScreen({Key? key, required this.url}) : super(key: key);
+
   @override
-  _MediaControlScreenState createState() => _MediaControlScreenState();
+  _PlayerScreenState createState() => _PlayerScreenState();
 }
 
-class _MediaControlScreenState extends State<MediaControlScreen> {
-  final NativeCommunication _nativeCommunication = NativeCommunication();
-  bool isPlaying = false;
+class _PlayerScreenState extends State<PlayerScreen> {
+  static const platform = MethodChannel('com.example.app/media');
 
-  void playMedia() {
-    _nativeCommunication.playMedia('https://www.w3schools.com/html/mov_bbb.mp4');
-    setState(() {
-      isPlaying = true;
-    });
+  @override
+  void initState() {
+    super.initState();
+    playMedia();
   }
 
-  // void pauseMedia() {
-  //   _nativeCommunication.pauseMedia();
-  //   setState(() {
-  //     isPlaying = false;
-  //   });
-  // }
-  //
-  // void seekMedia(double position) {
-  //   _nativeCommunication.seekMedia(position);
-  // }
+  Future<void> playMedia() async {
+    try {
+      await platform.invokeMethod('playMedia', {'url': widget.url});
+    } on PlatformException catch (e) {
+      print("Failed to play media: '${e.message}'.");
+    }
+  }
+
+  Future<void> pauseMedia() async {
+    try {
+      await platform.invokeMethod('pauseMedia');
+    } on PlatformException catch (e) {
+      print("Failed to pause media: '${e.message}'.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Media Control')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: isPlaying ? null : playMedia,
-              child: Text('Play'),
-            ),
-            // ElevatedButton(
-            //   onPressed: isPlaying ? pauseMedia : null,
-            //   child: Text('Pause'),
-            // ),
-            Slider(
-              value: 0.0, // Update this with the current position
-              onChanged: (value) {
-                // seekMedia(value);
-              },
-              min: 0.0,
-              max: 100.0, // Set this to the media duration
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('Media Player'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.pause),
+            onPressed: pauseMedia,
+          ),
+        ],
+      ),
+      body: const Center(
+        child: Text('Video is playing...'),
       ),
     );
   }
