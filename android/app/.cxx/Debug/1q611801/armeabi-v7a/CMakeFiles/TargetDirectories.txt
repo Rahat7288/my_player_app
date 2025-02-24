@@ -1,0 +1,2 @@
+/Users/macbookpro/Desktop/WorkPlace/practice/my_player/android/app/.cxx/Debug/1q611801/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Desktop/WorkPlace/practice/my_player/android/app/.cxx/Debug/1q611801/armeabi-v7a/CMakeFiles/rebuild_cache.dir
